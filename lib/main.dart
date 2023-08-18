@@ -136,8 +136,7 @@ class _DataEntryFormState extends State<DataEntryForm> {
                 );
                 if (selectedDate != null) {
                   setState(() {
-                    _fechaNacimiento =
-                    selectedDate.toLocal().toString().split(' ')[0];
+                    _fechaNacimiento = selectedDate.toLocal().toString().split(' ')[0];
                   });
                 }
               },
@@ -148,7 +147,10 @@ class _DataEntryFormState extends State<DataEntryForm> {
                 return null;
               },
               readOnly: true,
+              controller: TextEditingController(text: _fechaNacimiento),
+              // Agrega esta línea para usar un TextEditingController
             ),
+
             TextFormField(
               decoration: const InputDecoration(labelText: 'Email'),
               keyboardType: TextInputType.emailAddress,
