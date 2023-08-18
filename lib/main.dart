@@ -5,66 +5,112 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Uala Testing',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+        primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const FirstScreen(),
+      routes: {
+        '/second': (context) => const SecondScreen(),
+      },
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
+class FirstScreen extends StatefulWidget {
+  const FirstScreen({Key? key}) : super(key: key);
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<FirstScreen> createState() => _FirstScreenState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _FirstScreenState extends State<FirstScreen> {
+  final nameController = TextEditingController();
+  final lastNameController = TextEditingController();
+  final birthDateController = TextEditingController();
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
+  @override
+  void dispose() {
+    nameController.dispose();
+    lastNameController.dispose();
+    birthDateController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+        title: const Text('Uala Testing'),
       ),
-      body: Center(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
+          children: [
             const Text(
-              'You have pushed the button this many times:',
+              'Ingrese sus datos',
+              style: TextStyle(fontSize: 24),
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'Nombre'),
+            ),
+            TextField(
+              controller: lastNameController,
+              decoration: const InputDecoration(labelText: 'Apellido'),
+            ),
+            TextField(
+              controller: birthDateController,
+              decoration: const InputDecoration(labelText: 'Fecha de nacimiento'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/second', arguments: {
+                  'name': nameController.text,
+                  'lastName': lastNameController.text,
+                  'birthDate': birthDateController.text,
+                });
+              },
+              child: const Text('Ingresar'),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
+
+class SecondScreen extends StatelessWidget {
+  const SecondScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)!.settings.arguments as Map<String, String>;
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Flutter Demo'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Hola ${args['name']} ${args['lastName']}',
+              style: const TextStyle(fontSize: 24),
+            ),
+            Text(
+              'Tu fecha de nacimiento es ${args['birthDate']}',
+              style: const TextStyle(fontSize: 24),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
