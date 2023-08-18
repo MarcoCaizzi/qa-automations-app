@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:qa_automations_app/person_model.dart';
+
+import 'database_helper.dart';
 
 void main() {
   runApp(const MyApp());
@@ -78,23 +81,41 @@ class _DataEntryFormState extends State<DataEntryForm> {
   String _email = '';
   String _telefono = '';
 
-  void _submitForm() {
+  void _submitForm(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => DataDisplayScreen(
-            nombre: _nombre,
-            apellido: _apellido,
-            fechaNacimiento: _fechaNacimiento,
-            email: _email,
-            telefono: _telefono,
-          ),
-        ),
+
+      final person = Person(
+        id: 0,
+        nombre: _nombre,
+        apellido: _apellido,
+        fechaNacimiento: _fechaNacimiento,
+        email: _email,
+        telefono: _telefono,
       );
+
+      final dbHelper = DatabaseHelper.instance;
+      await dbHelper.insertPerson(person);
+
+      // Utiliza Future.microtask para mantener el BuildContext en el mismo ámbito
+      Future.microtask(() {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DataDisplayScreen(
+              nombre: _nombre,
+              apellido: _apellido,
+              fechaNacimiento: _fechaNacimiento,
+              email: _email,
+              telefono: _telefono,
+            ),
+          ),
+        );
+      });
     }
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -158,7 +179,7 @@ class _DataEntryFormState extends State<DataEntryForm> {
                 if (value == null || value.isEmpty) {
                   return 'Por favor ingresa tu email';
                 }
-                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                if (!RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
                   return 'Por favor ingresa un email válido';
                 }
                 return null;
@@ -181,7 +202,7 @@ class _DataEntryFormState extends State<DataEntryForm> {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _submitForm,
+              onPressed: () => _submitForm(context),
               child: const Text('Ingresar'),
             ),
           ],
