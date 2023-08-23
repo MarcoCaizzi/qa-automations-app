@@ -11,7 +11,7 @@ class DatabaseHelper {
   DatabaseHelper._init();
 
   Future<Database> get database async {
-    if (_database != null) return _database!;
+    //if (_database != null) return _database!;
 
     _database = await _initDB('people.db');
     return _database!;
@@ -26,25 +26,28 @@ class DatabaseHelper {
   Future<void> _createDB(Database db, int version) async {
     await db.execute('''
       CREATE TABLE people(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nombre TEXT,
-        apellido TEXT,
-        fechaNacimiento TEXT,
-        email TEXT,
-        telefono TEXT
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre TEXT,
+      apellido TEXT,
+      fechaNacimiento TEXT,
+      email TEXT,
+      telefono TEXT
       )
     ''');
   }
 
   Future<int> insertPerson(Person person) async {
     final db = await database;
-    return await db.insert('people', person.toMap());
+    int insertedId = await db.insert('people', person.toMap());
+    await db.close();
+    return insertedId;
   }
+
 
   Future<List<Person>> getPeople() async {
     final db = await database;
     final maps = await db.query('people');
-    return List.generate(maps.length, (i) {
+    final peopleList = List.generate(maps.length, (i) {
       return Person(
         id: maps[i]['id'] as int,
         nombre: maps[i]['nombre'] as String,
@@ -54,5 +57,9 @@ class DatabaseHelper {
         telefono: maps[i]['telefono'] as String,
       );
     });
+
+    await db.close(); // Cierra la conexión después de generar la lista
+    return peopleList;
   }
+
 }

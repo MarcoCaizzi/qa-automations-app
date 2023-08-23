@@ -1,13 +1,13 @@
 class Person {
-  final int id;
-  final String nombre;
-  final String apellido;
-  final String fechaNacimiento;
-  final String email;
-  final String telefono;
+  int? id;
+  String nombre;
+  String apellido;
+  String fechaNacimiento;
+  String email;
+  String telefono;
 
   Person({
-    required this.id,
+    this.id,
     required this.nombre,
     required this.apellido,
     required this.fechaNacimiento,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:qa_automations_app/person_model.dart';
-
 import 'database_helper.dart';
 
 void main() {
@@ -31,48 +30,49 @@ class DataEntryScreen extends StatelessWidget {
 }
 
 class DataDisplayScreen extends StatelessWidget {
-  final String nombre;
-  final String apellido;
-  final String fechaNacimiento;
-  final String email;
-  final String telefono;
+  final List<Person> peopleList;
 
-  DataDisplayScreen({super.key,
-    required this.nombre,
-    required this.apellido,
-    required this.fechaNacimiento,
-    required this.email,
-    required this.telefono,
+  const DataDisplayScreen({super.key,
+    required this.peopleList,
   });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Datos Ingresados')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Nombre: $nombre $apellido'),
-            Text('Fecha de Nacimiento: $fechaNacimiento'),
-            Text('Email: $email'),
-            Text('Teléfono: $telefono'),
-          ],
-        ),
+      body: ListView.builder(
+        itemCount: peopleList.length,
+        itemBuilder: (context, index) {
+          final person = peopleList[index];
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: ListTile(
+              title: Text('${person.nombre} ${person.apellido}'),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Fecha de Nacimiento: ${person.fechaNacimiento}'),
+                  Text('Email: ${person.email}'),
+                  Text('Teléfono: ${person.telefono}'),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 }
 
+
 class DataEntryForm extends StatefulWidget {
   const DataEntryForm({super.key});
 
   @override
-  _DataEntryFormState createState() => _DataEntryFormState();
+  DataEntryFormState createState() => DataEntryFormState();
 }
 
-class _DataEntryFormState extends State<DataEntryForm> {
+class DataEntryFormState extends State<DataEntryForm> {
   final _formKey = GlobalKey<FormState>();
 
   String _nombre = '';
@@ -86,7 +86,6 @@ class _DataEntryFormState extends State<DataEntryForm> {
       _formKey.currentState!.save();
 
       final person = Person(
-        id: 0,
         nombre: _nombre,
         apellido: _apellido,
         fechaNacimiento: _fechaNacimiento,
@@ -97,17 +96,13 @@ class _DataEntryFormState extends State<DataEntryForm> {
       final dbHelper = DatabaseHelper.instance;
       await dbHelper.insertPerson(person);
 
-      // Utiliza Future.microtask para mantener el BuildContext en el mismo ámbito
+      final peopleList = await dbHelper.getPeople();
       Future.microtask(() {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => DataDisplayScreen(
-              nombre: _nombre,
-              apellido: _apellido,
-              fechaNacimiento: _fechaNacimiento,
-              email: _email,
-              telefono: _telefono,
+              peopleList: peopleList, // Pasa la lista de personas a mostrar
             ),
           ),
         );
