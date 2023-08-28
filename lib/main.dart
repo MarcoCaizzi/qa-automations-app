@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:qa_automations_app/person_model.dart';
+import 'package:qa_automations_app/model.dart';
+import 'dataDisplayScreen.dart';
 import 'database_helper.dart';
 
 void main() {
@@ -23,47 +24,11 @@ class DataEntryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Ingreso de Datos')),
+      appBar: AppBar(title: const Text('Ingrese de Datos')),
       body: const DataEntryForm(),
     );
   }
 }
-
-class DataDisplayScreen extends StatelessWidget {
-  final List<Person> peopleList;
-
-  const DataDisplayScreen({super.key,
-    required this.peopleList,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Datos Ingresados')),
-      body: ListView.builder(
-        itemCount: peopleList.length,
-        itemBuilder: (context, index) {
-          final person = peopleList[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: ListTile(
-              title: Text('${person.nombre} ${person.apellido}'),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Fecha de Nacimiento: ${person.fechaNacimiento}'),
-                  Text('Email: ${person.email}'),
-                  Text('Teléfono: ${person.telefono}'),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
 
 class DataEntryForm extends StatefulWidget {
   const DataEntryForm({super.key});
@@ -75,42 +40,16 @@ class DataEntryForm extends StatefulWidget {
 class DataEntryFormState extends State<DataEntryForm> {
   final _formKey = GlobalKey<FormState>();
 
-  String _nombre = '';
-  String _apellido = '';
-  String _fechaNacimiento = '';
+  String _name = '';
+  String _lastName = '';
+  String _dateOfBirth = '';
   String _email = '';
-  String _telefono = '';
-
-  void _submitForm(BuildContext context) async {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-
-      final person = Person(
-        nombre: _nombre,
-        apellido: _apellido,
-        fechaNacimiento: _fechaNacimiento,
-        email: _email,
-        telefono: _telefono,
-      );
-
-      final dbHelper = DatabaseHelper.instance;
-      await dbHelper.insertPerson(person);
-
-      final peopleList = await dbHelper.getPeople();
-      Future.microtask(() {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DataDisplayScreen(
-              peopleList: peopleList, // Pasa la lista de personas a mostrar
-            ),
-          ),
-        );
-      });
-    }
-  }
-
-
+  String _cellularPhoneNumber = '';
+  Country? _selectedCountry;
+  Province? _selectedProvince;
+  List<String> _provinces = [];
+  List<Province> _provincesList = [];
+  final dbHelper = DatabaseHelper.instance;
 
   @override
   Widget build(BuildContext context) {
@@ -128,7 +67,7 @@ class DataEntryFormState extends State<DataEntryForm> {
                 }
                 return null;
               },
-              onSaved: (value) => _nombre = value!,
+              onSaved: (value) => _name = value!,
             ),
             TextFormField(
               decoration: const InputDecoration(labelText: 'Apellido'),
@@ -138,10 +77,11 @@ class DataEntryFormState extends State<DataEntryForm> {
                 }
                 return null;
               },
-              onSaved: (value) => _apellido = value!,
+              onSaved: (value) => _lastName = value!,
             ),
             TextFormField(
-              decoration: const InputDecoration(labelText: 'Fecha de Nacimiento'),
+              decoration:
+                  const InputDecoration(labelText: 'Fecha de Nacimiento'),
               onTap: () async {
                 FocusScope.of(context).requestFocus(FocusNode());
                 final selectedDate = await showDatePicker(
@@ -152,7 +92,8 @@ class DataEntryFormState extends State<DataEntryForm> {
                 );
                 if (selectedDate != null) {
                   setState(() {
-                    _fechaNacimiento = selectedDate.toLocal().toString().split(' ')[0];
+                    _dateOfBirth =
+                        selectedDate.toLocal().toString().split(' ')[0];
                   });
                 }
               },
@@ -163,10 +104,9 @@ class DataEntryFormState extends State<DataEntryForm> {
                 return null;
               },
               readOnly: true,
-              controller: TextEditingController(text: _fechaNacimiento),
+              controller: TextEditingController(text: _dateOfBirth),
               // Agrega esta línea para usar un TextEditingController
             ),
-
             TextFormField(
               decoration: const InputDecoration(labelText: 'Email'),
               keyboardType: TextInputType.emailAddress,
@@ -174,7 +114,8 @@ class DataEntryFormState extends State<DataEntryForm> {
                 if (value == null || value.isEmpty) {
                   return 'Por favor ingresa tu email';
                 }
-                if (!RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                if (!RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$')
+                    .hasMatch(value)) {
                   return 'Por favor ingresa un email válido';
                 }
                 return null;
@@ -193,7 +134,59 @@ class DataEntryFormState extends State<DataEntryForm> {
                 }
                 return null;
               },
-              onSaved: (value) => _telefono = value!,
+              onSaved: (value) => _cellularPhoneNumber = value!,
+            ),
+            FutureBuilder<List<Country>>(
+              future: dbHelper.getCountries(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const CircularProgressIndicator();
+                } else if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Text('No hay países disponibles');
+                } else {
+                  final countryList = snapshot.data!;
+                  final countryItems = countryList.map((country) {
+                    return DropdownMenuItem<Country>(
+                      value: country,
+                      child: Text(country.name),
+                    );
+                  }).toList();
+                  return DropdownButtonFormField<Country>(
+                    decoration: const InputDecoration(labelText: 'País'),
+                    items: countryItems,
+                    value: _selectedCountry,
+                    onChanged: (Country? country) {
+                      setState(() {
+                        _selectedCountry = country!;
+                        dbHelper.getProvincesByCountry(_selectedCountry!.id).then((provinces) {
+                          setState(() {
+                            _provincesList = provinces;
+                            _provinces = _provincesList.map((province) => province.name).toList();
+                            _selectedProvince=null;
+                          });
+                        });
+                      });
+                    },
+                  );
+                }
+              },
+            ),
+            DropdownButtonFormField<Province>(
+              decoration: const InputDecoration(labelText: 'Provincia'),
+              value: _selectedProvince,
+              items: _provincesList.map((province) {
+                return DropdownMenuItem<Province>(
+                  value: province,
+                  child: Text(province.name),
+                );
+              }).toList(),
+              onChanged: (Province? value) {
+                setState(() {
+                  _selectedProvince = value!;
+                });
+              },
             ),
             const SizedBox(height: 20),
             ElevatedButton(
@@ -205,5 +198,34 @@ class DataEntryFormState extends State<DataEntryForm> {
       ),
     );
   }
-}
 
+  void _submitForm(BuildContext context) async {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+
+      final people = People(
+          name: _name,
+          lastName: _lastName,
+          dateOfBirth: _dateOfBirth,
+          email: _email,
+          cellularPhoneNumber: _cellularPhoneNumber,
+          idCountry: _selectedCountry!,
+          idProvince: _selectedProvince!);
+
+      final dbHelper = DatabaseHelper.instance;
+      await dbHelper.insertPeople(people);
+
+      final peopleList = await dbHelper.getPeople();
+      Future.microtask(() {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DataDisplayScreen(
+              peopleList: peopleList, // Pasa la lista de personas a mostrar
+            ),
+          ),
+        );
+      });
+    }
+  }
+}
