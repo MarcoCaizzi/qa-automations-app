@@ -26,6 +26,7 @@ class DataDisplayScreen extends StatelessWidget {
                   Text('Fecha de Nacimiento: ${people.dateOfBirth}'),
                   Text('Email: ${people.email}'),
                   Text('Teléfono: ${people.cellularPhoneNumber}'),
+                  Text('Provincia: ${people.idProvince.name}')
                 ],
               ),
             ),

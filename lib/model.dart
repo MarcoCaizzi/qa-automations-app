@@ -5,7 +5,6 @@ class People {
   String dateOfBirth;
   String email;
   String cellularPhoneNumber;
-  Country idCountry;
   Province idProvince;
 
   People({
@@ -15,7 +14,6 @@ class People {
     required this.dateOfBirth,
     required this.email,
     required this.cellularPhoneNumber,
-    required this.idCountry,
     required this.idProvince,
   });
 
@@ -27,7 +25,6 @@ class People {
       'dateOfBirth': dateOfBirth,
       'email': email,
       'cellularPhoneNumber': cellularPhoneNumber,
-      'idCountry': idCountry.id,
       'idProvince': idProvince.id,
     };
   }

@@ -209,7 +209,6 @@ class DataEntryFormState extends State<DataEntryForm> {
           dateOfBirth: _dateOfBirth,
           email: _email,
           cellularPhoneNumber: _cellularPhoneNumber,
-          idCountry: _selectedCountry!,
           idProvince: _selectedProvince!);
 
       final dbHelper = DatabaseHelper.instance;

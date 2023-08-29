@@ -48,10 +48,8 @@ class DatabaseHelper {
     final List<People> peopleList = [];
 
     for (final map in maps) {
-      final idCountry = map['idCountry'] as int;
       final idProvince = map['idProvince'] as int;
 
-      final country = await getCountry(idCountry, db);
       final province = await getProvinces(idProvince, db);
 
       final person = People(
@@ -61,7 +59,6 @@ class DatabaseHelper {
         dateOfBirth: map['dateOfBirth'] as String,
         email: map['email'] as String,
         cellularPhoneNumber: map['cellularPhoneNumber'] as String,
-        idCountry: country,
         idProvince: province,
       );
       peopleList.add(person);
