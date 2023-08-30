@@ -1,14 +1,17 @@
-import 'package:flutter/services.dart';
-import 'package:qa_automations_app/model.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart' as path;
 import 'dart:io';
 
+import 'package:flutter/services.dart';
+import 'package:path/path.dart' as path;
+import 'package:qa_automations_app/domain/model/country.dart';
+import 'package:qa_automations_app/domain/model/people.dart';
+import 'package:qa_automations_app/domain/model/province.dart';
+import 'package:sqflite/sqflite.dart';
 
-class DatabaseHelper {
-  static final DatabaseHelper instance = DatabaseHelper._init();
+class DatabaseRepository {
+  static final DatabaseRepository instance = DatabaseRepository._init();
   static Database? _database;
-  DatabaseHelper._init();
+
+  DatabaseRepository._init();
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -40,7 +43,6 @@ class DatabaseHelper {
     int insertedId = await db.insert('people', people.toMap());
     return insertedId;
   }
-
 
   Future<List<People>> getPeople() async {
     final db = await database;
@@ -77,10 +79,9 @@ class DatabaseHelper {
   Future<Province> getProvinces(int id, Database db) async {
     final map = await db.query('province', where: 'id = ?', whereArgs: [id]);
     return Province(
-      id: map[0]['id'] as int,
-      name: map[0]['name'] as String,
-      idCountry : map[0]['idCountry'] as int
-    );
+        id: map[0]['id'] as int,
+        name: map[0]['name'] as String,
+        idCountry: map[0]['idCountry'] as int);
   }
 
   Future<List<Country>> getCountries() async {
@@ -96,7 +97,8 @@ class DatabaseHelper {
 
   Future<List<Province>> getProvincesByCountry(int idCountry) async {
     final db = await database;
-    final provinces = await db.query('province', where: 'idCountry = ?', whereArgs: [idCountry]);
+    final provinces = await db
+        .query('province', where: 'idCountry = ?', whereArgs: [idCountry]);
     return List.generate(provinces.length, (i) {
       return Province(
         id: provinces[i]['id'] as int,
@@ -106,4 +108,8 @@ class DatabaseHelper {
     });
   }
 
+  Future close() async {
+    final db = await instance.database;
+    db.close();
+  }
 }
